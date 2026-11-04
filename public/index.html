@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Netflix Cookie Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0a0a0a;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(229,9,20,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(229,9,20,0.05) 0%, transparent 50%);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative; z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 40px; }
+    .header svg { height: 48px; margin-bottom: 12px; }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #e50914);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .header p { color: #666; font-size: 0.85rem; }
+
+    /* Extension status */
+    .ext-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+      transition: all 0.3s;
+    }
+    .ext-status.connected { background: rgba(46,160,46,0.12); border: 1px solid rgba(46,160,46,0.3); color: #4caf50; }
+    .ext-status.disconnected { background: rgba(229,9,20,0.1); border: 1px solid rgba(229,9,20,0.25); color: #ef5350; }
+    .ext-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .connected .ext-dot { background: #4caf50; }
+    .disconnected .ext-dot { background: #ef5350; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Card */
+    .card {
+      background: rgba(22,22,22,0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #333;
+      border-radius: 14px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #e50914;
+      background: rgba(229,9,20,0.05);
+    }
+    .upload-zone.has-file {
+      border-color: #4caf50;
+      border-style: solid;
+      background: rgba(46,160,46,0.05);
+    }
+    .upload-icon {
+      font-size: 2.8rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .upload-text {
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .upload-hint {
+      color: #555;
+      font-size: 0.75rem;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* File info */
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #111;
+      border-radius: 10px;
+      margin-top: 16px;
+    }
+    .file-info.show { display: flex; }
+    .file-icon { font-size: 1.6rem; }
+    .file-details { flex: 1; }
+    .file-name { font-size: 0.85rem; font-weight: 600; color: #fff; }
+    .file-meta { font-size: 0.72rem; color: #666; margin-top: 2px; }
+    .file-remove {
+      background: rgba(229,9,20,0.15);
+      border: none;
+      color: #e50914;
+      font-size: 1rem;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .file-remove:hover { background: rgba(229,9,20,0.3); }
+
+    /* Cookie preview */
+    .cookie-preview {
+      display: none;
+      margin-top: 16px;
+      background: #111;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .cookie-preview.show { display: block; }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #181818;
+      border-bottom: 1px solid #222;
+    }
+    .preview-title { font-size: 0.78rem; font-weight: 600; color: #aaa; }
+    .preview-count {
+      font-size: 0.7rem;
+      background: #e50914;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .preview-list {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+    .preview-list::-webkit-scrollbar { width: 4px; }
+    .preview-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .preview-item {
+      display: flex;
+      padding: 6px 14px;
+      font-size: 0.72rem;
+      font-family: 'Courier New', monospace;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .preview-item:last-child { border-bottom: none; }
+    .ck-name { color: #e50914; min-width: 160px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ck-value { color: #4fc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+    /* Buttons */
+    .btn-inject {
+      width: 100%;
+      margin-top: 24px;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-inject.ready {
+      background: linear-gradient(135deg, #e50914, #b20710);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(229,9,20,0.4);
+    }
+    .btn-inject.ready:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 32px rgba(229,9,20,0.5);
+    }
+    .btn-inject.disabled {
+      background: #222;
+      color: #555;
+      cursor: not-allowed;
+    }
+    .btn-inject.loading {
+      background: linear-gradient(135deg, #e50914, #b20710);
+      color: #fff;
+      pointer-events: none;
+    }
+    .btn-inject.success {
+      background: linear-gradient(135deg, #2ea02e, #1a7a1a);
+      color: #fff;
+    }
+
+    .spinner-small {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Status message */
+    .status-msg {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .status-msg.show { display: block; }
+    .status-msg.success { background: rgba(46,160,46,0.1); border: 1px solid rgba(46,160,46,0.25); color: #4caf50; }
+    .status-msg.error { background: rgba(229,9,20,0.1); border: 1px solid rgba(229,9,20,0.25); color: #ef5350; }
+    .status-msg.info { background: rgba(66,133,244,0.1); border: 1px solid rgba(66,133,244,0.25); color: #64b5f6; }
+
+    /* Guide card */
+    .guide-card {
+      background: rgba(22,22,22,0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 28px 32px;
+    }
+
+    .steps { margin-top: 14px; }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      background: #e50914;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      min-width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-text {
+      font-size: 0.84rem;
+      color: #bbb;
+      line-height: 1.6;
+    }
+    .step-text strong { color: #fff; }
+    .step-text code {
+      background: #1a1a1a;
+      color: #4fc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+    }
+
+    /* Divider */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 20px 0;
+      color: #444;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #222;
+    }
+
+    /* Textarea fallback */
+    .paste-section { margin-top: 0; }
+    .paste-toggle {
+      background: none;
+      border: 1px solid #333;
+      color: #888;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+    }
+    .paste-toggle:hover { border-color: #555; color: #aaa; }
+    .paste-area {
+      display: none;
+      margin-top: 12px;
+    }
+    .paste-area.show { display: block; }
+    .paste-area textarea {
+      width: 100%;
+      background: #111;
+      border: 1.5px solid #222;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.8rem;
+      font-family: 'Courier New', monospace;
+      padding: 12px;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .paste-area textarea:focus { border-color: #e50914; }
+    .paste-area textarea::placeholder { color: #444; }
+    .paste-btn {
+      margin-top: 8px;
+      background: #222;
+      border: none;
+      color: #aaa;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .paste-btn:hover { background: #333; color: #fff; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 36px;
+      color: #333;
+      font-size: 0.72rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <svg viewBox="0 0 111 30" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#e50914" d="M105.062 14.28L111 30c-1.75-.25-3.499-.563-5.28-.845l-3.345-8.686-3.437 7.969c-1.687-.282-3.344-.376-5.031-.595l6.03-13.622L94.468 0h5.063l3.062 7.874L105.875 0h5.125l-5.938 14.28zM90.47 0h-4.594v27.25c1.5.094 3.062.156 4.594.343V0zm-8.563 26.937c-4.187-.281-8.375-.53-12.656-.625V0h4.687v21.875c2.688.062 5.375.28 7.969.405v4.657zM64.25 10.657v4.687h-6.406V26H53.22V0h13.125v4.687h-8.5v5.97h6.406zM45.844 0v4.687h-5.938v22.126c-1.53 0-3.062-.094-4.593-.125V4.687h-5.938V0h16.47zM27.97 0H17.218v26.188c-1.563-.063-3.156-.156-4.688-.25V0H1.782v4.687H12.53V24.5c-1.156-.094-2.25-.156-3.344-.25V4.687H1.782V0h16.47V24.22c3.406.187 6.843.468 10.218.78V0h4.687v25.813c1.562.187 3.156.344 4.687.53V0h-9.875z"/>
+    </svg>
+    <h1>Cookie Auto Login</h1>
+    <p>Upload cookie file → Extension tự động inject → Đăng nhập Netflix</p>
+  </div>
+
+  <!-- Extension status -->
+  <div class="ext-status disconnected" id="extStatus">
+    <div class="ext-dot"></div>
+    <span id="extStatusText">Extension chưa được cài đặt</span>
+  </div>
+
+  <!-- Main card -->
+  <div class="card">
+    <div class="card-title">📁 Upload Cookie File</div>
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" accept=".json,.txt,.cookie,.cookies" id="fileInput" />
+      <span class="upload-icon">📤</span>
+      <div class="upload-text">Kéo thả file cookie vào đây hoặc <strong style="color:#e50914">click để chọn file</strong></div>
+      <div class="upload-hint">Hỗ trợ: .json (Cookie Editor) · .txt (Netscape) · chuỗi cookie thô</div>
+    </div>
+
+    <!-- File info -->
+    <div class="file-info" id="fileInfo">
+      <span class="file-icon">📄</span>
+      <div class="file-details">
+        <div class="file-name" id="fileName">-</div>
+        <div class="file-meta" id="fileMeta">-</div>
+      </div>
+      <button class="file-remove" onclick="removeFile()" title="Xoá file">✕</button>
+    </div>
+
+    <!-- Cookie preview -->
+    <div class="cookie-preview" id="cookiePreview">
+      <div class="preview-header">
+        <span class="preview-title">🍪 Cookies đã nhận diện</span>
+        <span class="preview-count" id="cookieCount">0</span>
+      </div>
+      <div class="preview-list" id="previewList"></div>
+    </div>
+
+    <!-- Or divider -->
+    <div class="or-divider">hoặc</div>
+
+    <!-- Paste fallback -->
+    <div class="paste-section">
+      <button class="paste-toggle" onclick="togglePaste()">📋 Dán cookie thủ công</button>
+      <div class="paste-area" id="pasteArea">
+        <textarea id="pasteInput" placeholder='Dán cookie vào đây... (JSON array, chuỗi key=value, Netscape format)'></textarea>
+        <button class="paste-btn" onclick="loadFromPaste()">📥 Tải cookie từ text</button>
+      </div>
+    </div>
+
+    <!-- Inject button -->
+    <button class="btn-inject disabled" id="btnInject" onclick="injectCookies()">
+      🚀 Inject Cookie & Đăng Nhập Netflix
+    </button>
+
+    <!-- Status -->
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <!-- Guide card -->
+  <div class="guide-card">
+    <div class="card-title">📖 Hướng dẫn sử dụng</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Cài extension: Mở <code>chrome://extensions</code> → bật <strong>Developer mode</strong> → <strong>Load unpacked</strong> → chọn thư mục <code>extension/</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Lấy cookie: Cài <strong>Cookie Editor</strong> extension → vào <strong>netflix.com</strong> đã đăng nhập → <strong>Export</strong> (JSON)</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Upload file cookie JSON đã export ở bước 2 vào trang này</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Nhấn <strong>"🚀 Inject Cookie & Đăng Nhập Netflix"</strong> → extension tự inject cookie và mở Netflix</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    🔒 Mọi dữ liệu chỉ xử lý cục bộ · Không gửi lên server nào · 100% offline-safe
+    <div style="margin-top:8px; color:#555;">
+      © 2026 <strong style="color:#e50914;">Soumek Xaynguyen</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════
+let parsedCookies = [];
+let extensionReady = false;
+
+// ════════════════════════════════════════════════
+// Extension detection via CustomEvent
+// ════════════════════════════════════════════════
+function checkExtension() {
+  window.postMessage({ type: 'NETFLIX_CL_PING' }, '*');
+}
+
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'NETFLIX_CL_PONG') {
+    extensionReady = true;
+    const el = document.getElementById('extStatus');
+    el.className = 'ext-status connected';
+    document.getElementById('extStatusText').textContent = '✓ Extension đã kết nối thành công';
+  }
+  if (event.data && event.data.type === 'NETFLIX_CL_RESULT') {
+    handleInjectResult(event.data);
+  }
+});
+
+// Check every 2s
+checkExtension();
+setInterval(checkExtension, 2000);
+
+// ════════════════════════════════════════════════
+// File handling
+// ════════════════════════════════════════════════
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+['dragenter','dragover'].forEach(ev => {
+  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(ev => {
+  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+});
+
+uploadZone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const cookies = parseCookies(text);
+    if (!cookies || !cookies.length) {
+      showStatus('error', '❌ Không tìm thấy cookie hợp lệ trong file! Kiểm tra lại định dạng.');
+      return;
+    }
+    parsedCookies = cookies;
+    showFileInfo(file.name, file.size, cookies.length);
+    showPreview(cookies);
+    updateButton();
+    showStatus('success', `✅ Đã đọc ${cookies.length} cookie từ "${file.name}"`);
+  };
+  reader.readAsText(file);
+}
+
+function showFileInfo(name, size, count) {
+  document.getElementById('fileName').textContent = name;
+  document.getElementById('fileMeta').textContent = `${formatBytes(size)} · ${count} cookies`;
+  document.getElementById('fileInfo').classList.add('show');
+  uploadZone.classList.add('has-file');
+  document.querySelector('.upload-icon').textContent = '✅';
+  document.querySelector('.upload-text').innerHTML = `<strong style="color:#4caf50">${name}</strong> đã được tải`;
+}
+
+function removeFile() {
+  parsedCookies = [];
+  fileInput.value = '';
+  document.getElementById('fileInfo').classList.remove('show');
+  document.getElementById('cookiePreview').classList.remove('show');
+  uploadZone.classList.remove('has-file');
+  document.querySelector('.upload-icon').textContent = '📤';
+  document.querySelector('.upload-text').innerHTML = 'Kéo thả file cookie vào đây hoặc <strong style="color:#e50914">click để chọn file</strong>';
+  updateButton();
+  hideStatus();
+}
+
+function showPreview(cookies) {
+  document.getElementById('cookieCount').textContent = cookies.length;
+  const list = document.getElementById('previewList');
+  list.innerHTML = cookies.map(ck => `
+    <div class="preview-item">
+      <span class="ck-name">${escapeHtml(ck.name)}</span>
+      <span class="ck-value">${escapeHtml(ck.value?.substring(0, 60) || '')}</span>
+    </div>
+  `).join('');
+  document.getElementById('cookiePreview').classList.add('show');
+}
+
+// ════════════════════════════════════════════════
+// Paste fallback
+// ════════════════════════════════════════════════
+function togglePaste() {
+  document.getElementById('pasteArea').classList.toggle('show');
+}
+
+function loadFromPaste() {
+  const text = document.getElementById('pasteInput').value;
+  if (!text.trim()) { showStatus('error', '❌ Ô paste trống!'); return; }
+  const cookies = parseCookies(text);
+  if (!cookies || !cookies.length) {
+    showStatus('error', '❌ Không tìm thấy cookie hợp lệ! Kiểm tra lại định dạng.');
+    return;
+  }
+  parsedCookies = cookies;
+  showFileInfo('paste-input.txt', new Blob([text]).size, cookies.length);
+  showPreview(cookies);
+  updateButton();
+  showStatus('success', `✅ Đã đọc ${cookies.length} cookie từ text`);
+}
+
+// ════════════════════════════════════════════════
+// Cookie parser (multi-format)
+// ════════════════════════════════════════════════
+function parseCookies(raw) {
+  raw = raw.trim();
+  if (!raw) return null;
+
+  // 1) JSON array
+  if (raw[0] === '[') {
+    try {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length && arr[0].name !== undefined) return arr;
+    } catch(e) {}
+  }
+
+  // 2) JSON object
+  if (raw[0] === '{') {
+    try { return [JSON.parse(raw)]; } catch(e) {}
+  }
+
+  // 3) Netscape format
+  if (raw.includes('\t')) {
+    const cookies = [];
+    raw.split('\n').forEach(line => {
+      line = line.trim();
+      if (!line || line.startsWith('#')) return;
+      const parts = line.split('\t');
+      if (parts.length >= 7) {
+        cookies.push({
+          domain: parts[0],
+          httpOnly: parts[1].toUpperCase() === 'TRUE',
+          path: parts[2],
+          secure: parts[3].toUpperCase() === 'TRUE',
+          expirationDate: parseInt(parts[4]) || undefined,
+          name: parts[5],
+          value: parts[6]
+        });
+      }
+    });
+    if (cookies.length) return cookies;
+  }
+
+  // 4) Raw string: key=value; key2=value2
+  const cookies = [];
+  raw.split(';').forEach(pair => {
+    const idx = pair.indexOf('=');
+    if (idx > 0) {
+      const name = pair.slice(0, idx).trim();
+      const value = pair.slice(idx + 1).trim();
+      if (name) cookies.push({ name, value, domain: '.netflix.com', path: '/' });
+    }
+  });
+  return cookies.length ? cookies : null;
+}
+
+// ════════════════════════════════════════════════
+// Inject via extension
+// ════════════════════════════════════════════════
+function injectCookies() {
+  if (!parsedCookies.length) return;
+
+  if (!extensionReady) {
+    showStatus('error', '❌ Extension chưa được cài đặt! Xem hướng dẫn bên dưới để cài extension.');
+    return;
+  }
+
+  const btn = document.getElementById('btnInject');
+  btn.className = 'btn-inject loading';
+  btn.innerHTML = '<div class="spinner-small"></div> Đang inject cookie...';
+
+  // Send to extension via postMessage
+  window.postMessage({
+    type: 'NETFLIX_CL_INJECT',
+    cookies: parsedCookies
+  }, '*');
+
+  // Timeout fallback
+  setTimeout(() => {
+    if (btn.classList.contains('loading')) {
+      btn.className = 'btn-inject ready';
+      btn.innerHTML = '🚀 Inject Cookie & Đăng Nhập Netflix';
+      showStatus('error', '⏱️ Timeout - Extension không phản hồi. Thử reload trang và extension.');
+    }
+  }, 10000);
+}
+
+function handleInjectResult(data) {
+  const btn = document.getElementById('btnInject');
+  if (data.success) {
+    btn.className = 'btn-inject success';
+    btn.innerHTML = '✅ Đã inject thành công! Đang mở Netflix...';
+    showStatus('success', `🎉 Đã inject ${data.count} cookie! Netflix đang mở trong tab mới...`);
+  } else {
+    btn.className = 'btn-inject ready';
+    btn.innerHTML = '🚀 Inject Cookie & Đăng Nhập Netflix';
+    showStatus('error', `❌ Lỗi: ${data.error || 'Không rõ'}`);
+  }
+}
+
+function updateButton() {
+  const btn = document.getElementById('btnInject');
+  if (parsedCookies.length > 0) {
+    btn.className = 'btn-inject ready';
+    btn.innerHTML = '🚀 Inject Cookie & Đăng Nhập Netflix';
+  } else {
+    btn.className = 'btn-inject disabled';
+    btn.innerHTML = '🚀 Inject Cookie & Đăng Nhập Netflix';
+  }
+}
+
+// ════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════
+function showStatus(type, msg) {
+  const el = document.getElementById('statusMsg');
+  el.className = 'status-msg show ' + type;
+  el.textContent = msg;
+}
+function hideStatus() {
+  document.getElementById('statusMsg').className = 'status-msg';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  return (bytes / 1024).toFixed(1) + ' KB';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
+

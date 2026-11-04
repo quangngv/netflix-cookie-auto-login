@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Netflix Cookie Auto Login",
+  "description": "Tự động inject cookie Netflix để đăng nhập nhanh - by Soumek Xaynguyen",
+  "version": "1.0.0",
+  "author": "Soumek Xaynguyen",
+  "permissions": [
+    "cookies",
+    "tabs",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.netflix.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
+        "https://localhost:*/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Netflix Cookie Login"
+  },
+  "icons": {}
+}
+

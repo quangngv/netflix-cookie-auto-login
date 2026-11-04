@@ -1,0 +1,16 @@
+{
+  "name": "netflix-cookie-login",
+  "version": "1.0.0",
+  "description": "Netflix Cookie Auto Login - Web + Chrome Extension",
+  "author": "Soumek Xaynguyen",
+  "license": "All Rights Reserved",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+

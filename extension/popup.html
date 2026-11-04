@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 380px;
+      min-height: 200px;
+      background: #0a0a0a;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #222;
+    }
+    .header h1 {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #e50914;
+    }
+    .header span { font-size: 1.2rem; }
+
+    /* Upload */
+    .upload-zone {
+      border: 2px dashed #333;
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .upload-zone:hover { border-color: #e50914; background: rgba(229,9,20,0.05); }
+    .upload-zone.has-file { border-color: #4caf50; border-style: solid; background: rgba(46,160,46,0.05); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 2rem; display: block; margin-bottom: 6px; }
+    .upload-text { color: #999; font-size: 0.78rem; }
+
+    .file-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #111;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      font-size: 0.78rem;
+    }
+    .file-badge.show { display: flex; }
+    .file-badge .name { flex: 1; color: #4caf50; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-badge .count { color: #aaa; }
+    .file-badge button { background: none; border: none; color: #e50914; cursor: pointer; font-size: 0.9rem; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn.ready { background: linear-gradient(135deg, #e50914, #b20710); color: #fff; }
+    .btn.ready:hover { opacity: 0.9; }
+    .btn.disabled { background: #222; color: #555; cursor: not-allowed; }
+    .btn.success { background: #2ea02e; color: #fff; }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.success { background: rgba(46,160,46,0.1); border: 1px solid rgba(46,160,46,0.25); color: #4caf50; }
+    .status.error { background: rgba(229,9,20,0.1); border: 1px solid rgba(229,9,20,0.25); color: #ef5350; }
+
+    .footer {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 0.68rem;
+      color: #444;
+    }
+    .footer a { color: #e50914; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span>🎬</span>
+    <h1>Netflix Cookie Login</h1>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" accept=".json,.txt,.cookie" id="fileInput" />
+    <span class="upload-icon">📤</span>
+    <div class="upload-text">Click để chọn file cookie</div>
+  </div>
+
+  <div class="file-badge" id="fileBadge">
+    <span>📄</span>
+    <span class="name" id="fileName">-</span>
+    <span class="count" id="fileCount">0 cookies</span>
+    <button onclick="removeFile()">✕</button>
+  </div>
+
+  <button class="btn disabled" id="btnInject" onclick="inject()">
+    🚀 Inject & Đăng Nhập
+  </button>
+
+  <div class="status" id="status"></div>
+
+  <div class="footer">
+    Full UI → <a href="http://localhost:3000" target="_blank">localhost:3000</a>
+    <div style="margin-top:4px;">© 2026 <span style="color:#e50914;">Soumek Xaynguyen</span></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
